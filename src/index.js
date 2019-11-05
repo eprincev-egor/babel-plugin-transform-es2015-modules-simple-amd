@@ -181,7 +181,10 @@ module.exports = function({ types: t }) {
                                         t.variableDeclaration("var", [
                                             t.variableDeclarator(
                                                 t.identifier(local.name),
-                                                t.identifier(importedID.name + "." + imported.name)
+                                                t.memberExpression(
+                                                    t.identifier(importedID.name), 
+                                                    t.identifier(imported.name)
+                                                )
                                             )
                                         ])
                                     );
