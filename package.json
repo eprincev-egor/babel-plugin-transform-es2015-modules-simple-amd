@@ -22,10 +22,9 @@
     "watch": "^0.16.0"
   },
   "scripts": {
-    "release": "babel src --out-dir dist",
     "test": "node test",
     "watch": "node test --watch",
-    "prepublish": "npm test && npm run release"
+    "prepublish": "npm test"
   },
   "keywords": [
     "babel-plugin",

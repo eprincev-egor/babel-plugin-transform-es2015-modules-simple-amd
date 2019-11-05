@@ -13,7 +13,15 @@ let pluginPath = require.resolve("../src");
 function runTests() {
     let testsPath = __dirname + "/fixtures/";
 
-    fs.readdirSync(testsPath).map(function(item) {
+    let dirs;
+    if ( process.env.testName ) {
+        dirs = [process.env.testName];
+    }
+    else {
+        dirs = fs.readdirSync(testsPath);
+    }
+    
+    dirs.map(function(item) {
         return {
             path: path.join(testsPath, item),
             name: item
