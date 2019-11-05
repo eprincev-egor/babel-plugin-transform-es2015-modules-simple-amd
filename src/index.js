@@ -1,8 +1,8 @@
 import "better-log/install";
-import template from "babel-template";
+import template from "@babel/template";
 
-let buildModule = template(`
-define([IMPORT_PATHS], function(IMPORT_VARS) {
+const buildModule = template(`
+define(IMPORT_PATHS, function(IMPORT_VARS) {
 	NAMED_IMPORTS;
 	BODY;
 });
