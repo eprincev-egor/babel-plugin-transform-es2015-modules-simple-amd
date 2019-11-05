@@ -196,7 +196,8 @@ module.exports = function({ types: t }) {
                             isModular = true;
                         }
                     }
-                    if (defaultExportExpression !== null) {
+
+                    if (isModular) {
                         // Output the `return defaultExport;` statement.
                         // Done within the loop to have access to `bodyStatementPath`.
 
@@ -214,9 +215,7 @@ module.exports = function({ types: t }) {
                         } else {
                             programPath.unshiftContainer("body", [returnStatement]);
                         }
-                    }
 
-                    if (isModular) {
                         programPath.node.body = [
                             buildModule({
                                 IMPORT_PATHS: t.arrayExpression(
