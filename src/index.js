@@ -195,27 +195,24 @@ module.exports = function({ types: t }) {
 
                             isModular = true;
                         }
+                    }
+                    if (defaultExportExpression !== null) {
+                        // Output the `return defaultExport;` statement.
+                        // Done within the loop to have access to `bodyStatementPath`.
 
-                        if (isLastBodyStatement && defaultExportExpression !== null) {
-                            // Output the `return defaultExport;` statement.
-                            // Done within the loop to have access to `bodyStatementPath`.
+                        // Cannot insertAfter a removed node.
+                        // Find the previous node which is not removed.
+                        const returnStatement = t.returnStatement(
+                            defaultExportExpression
+                        );
+                        const closestBeforePath = findClosestNonRemovedBefore(
+                            bodyPaths
+                        );
 
-                            // Cannot insertAfter a removed node.
-                            // Find the previous node which is not removed.
-                            const returnStatement = t.returnStatement(
-                                defaultExportExpression
-                            );
-                            const closestBeforePath = findClosestNonRemovedBefore(
-                                bodyStatementPath,
-                                i,
-                                bodyPaths
-                            );
-
-                            if (closestBeforePath !== null) {
-                                closestBeforePath.insertAfter(returnStatement);
-                            } else {
-                                programPath.unshiftContainer("body", [returnStatement]);
-                            }
+                        if (closestBeforePath !== null) {
+                            closestBeforePath.insertAfter(returnStatement);
+                        } else {
+                            programPath.unshiftContainer("body", [returnStatement]);
                         }
                     }
 
@@ -257,14 +254,14 @@ function createVariable(t, id, valueExpression) {
     ]);
 }
 
-function findClosestNonRemovedBefore(path, pathIndex, siblingPaths) {
+function findClosestNonRemovedBefore(allPaths) {
 // Cannot insertAfter a removed node...
 
 // Find the previous node which is not removed.
-    let refPath = path;
-    let i = pathIndex;
+    let i = allPaths.length - 1;
+    let refPath = allPaths[i];
     while (refPath.removed && i > 0) {
-        refPath = siblingPaths[--i];
+        refPath = allPaths[--i];
     }
 
     return refPath.removed ? null : refPath;
