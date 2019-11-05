@@ -19,7 +19,8 @@ module.exports = function({ types: t }) {
                     const namedImports = [];
                     
                     const exportsVariableName = programPath.scope.generateUidIdentifier("exports");
-                    let needReturn = false;
+                    let hasExport = false;
+                    let isOnlyDefaultExport = true;
                     let isModular = false;
 
                     for (let i = 0; i < bodyPaths.length; i++) {
@@ -102,13 +103,22 @@ module.exports = function({ types: t }) {
                             bodyStatementPath.remove();
                             isModular = true;
                         }
+
+                        // export default
+                        if ( t.isExportDefaultDeclaration(bodyStatementPath) ) {
+                            // need return at end file
+                            hasExport = true;
+                            // expression after keyword default
+                            const declaration = bodyStatementPath.get("declaration");
+                            bodyStatementPath
+                        }
                     }
 
                     if ( isModular ) {
 
                         // Output the `return defaultExport;` statement.
                         // Done within the loop to have access to `bodyStatementPath`.
-                        if ( needReturn ) {
+                        if ( hasExport ) {
                             const returnStatement = t.returnStatement(
                                 exportsVariableName
                             );
