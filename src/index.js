@@ -5,6 +5,7 @@ const template = require("@babel/template").default;
 
 const buildModule = template(`
 define(IMPORT_PATHS, function(IMPORT_VARS) {
+  "use strict";
 	NAMED_IMPORTS;
 	BODY;
 });
@@ -301,16 +302,6 @@ module.exports = function({ types: t }) {
                                 NAMED_IMPORTS: namedImports
                             })
                         ];
-
-                        const isStrict = programPath.node.directives.some(
-                            directive => directive.value.value === "use strict"
-                        );
-                        if (!isStrict) {
-                            programPath.unshiftContainer(
-                                "directives",
-                                t.directive(t.directiveLiteral("use strict"))
-                            );
-                        }
                     }
                 }
             }

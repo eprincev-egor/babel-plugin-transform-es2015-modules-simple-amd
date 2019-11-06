@@ -1,3 +1,3 @@
-"use strict";
-
-define(["a"], function (a) {});
+define(["a"], function (a) {
+  "use strict";
+});
