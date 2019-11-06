@@ -1,5 +1,5 @@
 {
-  "name": "babel-plugin-transform-es2015-modules-amd-fork",
+  "name": "babel-plugin-transform-import-as-amd",
   "version": "0.0.1",
   "description": "Simplified imports and exports",
   "repository": "https://github.com/eprincev-egor/babel-plugin-transform-es2015-modules-simple-amd",
@@ -23,8 +23,7 @@
   },
   "scripts": {
     "test": "node test",
-    "watch": "node test --watch",
-    "prepublish": "npm test"
+    "watch": "node test --watch"
   },
   "keywords": [
     "babel-plugin",

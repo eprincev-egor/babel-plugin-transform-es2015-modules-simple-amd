@@ -1,4 +1,4 @@
-# babel-plugin-transform-es2015-modules-amd-fork
+# babel-plugin-transform-import-as-amd
 
 Limited transformer for ECMAScript 2015 modules (AMD)
 
