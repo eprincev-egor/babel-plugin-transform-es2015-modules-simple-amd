@@ -21,10 +21,20 @@ function runTests() {
         dirs = fs.readdirSync(testsPath);
     }
     
-    dirs.map(function(item) {
+    dirs.map(function(dirName) {
+        const dirPath = path.join(testsPath, dirName);
+        let options = {};
+
+        try {
+            options = require(dirPath + "/options.js");
+        } catch(err) {
+            // no options for dirPath
+        }
+
         return {
-            path: path.join(testsPath, item),
-            name: item
+            path: dirPath,
+            name: dirName,
+            options
         };
     }).filter(function(item) {
         return fs.statSync(item.path).isDirectory();
@@ -36,7 +46,9 @@ function runTest(dir) {
     let outputError;
     try {
         output = babel.transformFileSync(dir.path + "/actual.js", {
-            plugins: [pluginPath]
+            plugins: [
+                [pluginPath, dir.options]
+            ]
         });
     } catch(ex) {
         outputError = ex;

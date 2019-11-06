@@ -2,9 +2,17 @@
 
 require("better-log/install");
 const template = require("@babel/template").default;
+const path = require("path");
 
-const buildModule = template(`
+const buildAnonymousModule = template(`
 define(IMPORT_PATHS, function(IMPORT_VARS) {
+  "use strict";
+	NAMED_IMPORTS;
+	BODY;
+});
+`);
+const buildNamedModule = template(`
+define(MODULE_NAME, IMPORT_PATHS, function(IMPORT_VARS) {
   "use strict";
 	NAMED_IMPORTS;
 	BODY;
@@ -33,11 +41,19 @@ module.exports = function({ types: t }) {
     return {
         visitor: {
             Program: {
-                exit(programPath) {
+                exit(programPath, meta) {
                     const bodyPaths = programPath.get("body");
                     const importPaths = [];
                     const importVars = [];
                     const namedImports = [];
+                    const options = meta.opts || {};
+                    const fullFilePath = meta.filename;
+
+                    if ( options.moduleName ) {
+                        if ( !options.moduleName.basePath ) {
+                            throw new Error("moduleName should be object like are: {basePath: '...'}");
+                        }
+                    }
                     
                     const exportsVariableName = programPath.scope.generateUidIdentifier("exports");
                     let hasExport = false;
@@ -325,15 +341,31 @@ module.exports = function({ types: t }) {
                         }
 
 
+                        const templateValues = {
+                            IMPORT_PATHS: t.arrayExpression(
+                                importPaths
+                            ),
+                            IMPORT_VARS: importVars,
+                            BODY: programPath.node.body,
+                            NAMED_IMPORTS: namedImports
+                        };
+                        let buildModule = buildAnonymousModule;
+                        
+                        if ( options.moduleName ) {
+                            buildModule = buildNamedModule;
+
+
+                            const basePath = options.moduleName.basePath;
+                            const relativePath = path.relative(basePath, fullFilePath);
+                            const moduleName = relativePath
+                                .replace(/\.js$/, "")
+                                .replace(/\\/g, "/");
+
+                            templateValues.MODULE_NAME = t.stringLiteral(moduleName);
+                        }
+
                         programPath.node.body = [
-                            buildModule({
-                                IMPORT_PATHS: t.arrayExpression(
-                                    importPaths
-                                ),
-                                IMPORT_VARS: importVars,
-                                BODY: programPath.node.body,
-                                NAMED_IMPORTS: namedImports
-                            })
+                            buildModule( templateValues )
                         ];
                     }
                 }
