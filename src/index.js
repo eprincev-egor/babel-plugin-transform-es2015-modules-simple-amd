@@ -24,19 +24,6 @@ module.exports = function({ types: t }) {
         ) );
     }
 
-    function findClosestNonRemovedBefore(path, pathIndex, siblingPaths) {
-        // Cannot insertAfter a removed node...
-      
-        // Find the previous node which is not removed.
-        let refPath = path;
-        let i = pathIndex;
-        while (refPath.removed && i > 0) {
-            refPath = siblingPaths[--i];
-        }
-      
-        return refPath.removed ? null : refPath;
-    }
-
     return {
         visitor: {
             Program: {
@@ -169,27 +156,96 @@ module.exports = function({ types: t }) {
                         }
 
                         // export {x as y}
+                        // export var a = 1;
+                        // export function test() {};
+                        // export class Test {};
                         if ( t.isExportNamedDeclaration(bodyStatementPath) ) {
                             hasExport = true;
                             isModular = true;
                             isOnlyDefaultExport = false;
 
                             const {specifiers} = bodyStatementPath.node;
+                            const declaration = bodyStatementPath.get("declaration");
 
-                            specifiers.forEach(specifier => {
-                                let asName = specifier.exported.name;
-                                let exportValue = specifier.local;
-
-                                const statement = exportStatement({
-                                    exportsVariableName,
-                                    key: asName,
-                                    value: exportValue
-                                });
+                            // export var a = 1;
+                            if ( !specifiers.length ) {
+                                // replace "export <expression>"
+                                // to "<expression>"
+                                bodyStatementPath.replaceWith( declaration );
                                 
-                                programPath.pushContainer("body", [statement]);
-                            });
 
-                            bodyStatementPath.remove();
+                                // export var a = 1;
+                                let isVariable = t.isVariableDeclaration( declaration );
+                                if ( isVariable ) {
+                                    let varNode = declaration.node;
+                                    let asName = varNode.declarations[0].id.name;
+                                    
+
+                                    let exportValue = t.identifier(asName);
+    
+                                    const statement = exportStatement({
+                                        exportsVariableName,
+                                        key: asName,
+                                        value: exportValue
+                                    });
+                                    
+                                    programPath.pushContainer("body", [statement]);
+                                }
+
+                                // export function x() {}
+                                let isFunction = t.isFunctionDeclaration(declaration);
+                                if ( isFunction ) {
+                                    let funcNode = declaration.node;
+                                    let asName = funcNode.id.name;
+
+
+                                    let exportValue = t.identifier(asName);
+    
+                                    const statement = exportStatement({
+                                        exportsVariableName,
+                                        key: asName,
+                                        value: exportValue
+                                    });
+                                    
+                                    programPath.pushContainer("body", [statement]);
+                                }
+
+                                // export class Test {}
+                                let isClass = t.isClassDeclaration(declaration);
+                                if ( isClass ) {
+                                    let classNode = declaration.node;
+                                    let asName = classNode.id.name;
+
+
+                                    let exportValue = t.identifier(asName);
+    
+                                    const statement = exportStatement({
+                                        exportsVariableName,
+                                        key: asName,
+                                        value: exportValue
+                                    });
+                                    
+                                    programPath.pushContainer("body", [statement]);
+                                }
+                                
+                            }
+                            // export {x as y}
+                            else {
+                                specifiers.forEach(specifier => {
+                                    let asName = specifier.exported.name;
+                                    let exportValue = specifier.local;
+    
+                                    const statement = exportStatement({
+                                        exportsVariableName,
+                                        key: asName,
+                                        value: exportValue
+                                    });
+                                    
+                                    programPath.pushContainer("body", [statement]);
+                                });
+
+                                bodyStatementPath.remove();
+                            }
                         }
                     }
 
