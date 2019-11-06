@@ -12,16 +12,29 @@ define(IMPORT_PATHS, function(IMPORT_VARS) {
 
 module.exports = function({ types: t }) {
     
-    function exportExpression({
+    function exportStatement({
         exportsVariableName,
         key,
         value
     }) {
-        return t.assignmentExpression(
+        return t.toStatement( t.assignmentExpression(
             "=", 
             t.memberExpression(exportsVariableName, t.identifier(key)), 
             value
-        );
+        ) );
+    }
+
+    function findClosestNonRemovedBefore(path, pathIndex, siblingPaths) {
+        // Cannot insertAfter a removed node...
+      
+        // Find the previous node which is not removed.
+        let refPath = path;
+        let i = pathIndex;
+        while (refPath.removed && i > 0) {
+            refPath = siblingPaths[--i];
+        }
+      
+        return refPath.removed ? null : refPath;
     }
 
     return {
@@ -146,24 +159,60 @@ module.exports = function({ types: t }) {
                             }
 
 
-                            const expression = exportExpression({
+                            const statement = exportStatement({
                                 exportsVariableName,
                                 key: "default",
                                 value: exportValue
                             });
 
-                            bodyStatementPath.replaceWith(expression);
+                            bodyStatementPath.replaceWith(statement);
                         }
 
+                        // export {x as y}
+                        if ( t.isExportNamedDeclaration(bodyStatementPath) ) {
+                            hasExport = true;
+                            isModular = true;
+                            isOnlyDefaultExport = false;
+
+                            const {specifiers} = bodyStatementPath.node;
+
+                            specifiers.forEach(specifier => {
+                                let asName = specifier.exported.name;
+                                let exportValue = specifier.local;
+
+                                const statement = exportStatement({
+                                    exportsVariableName,
+                                    key: asName,
+                                    value: exportValue
+                                });
+                                
+                                programPath.pushContainer("body", [statement]);
+                            });
+
+                            bodyStatementPath.remove();
+                        }
                     }
 
 
                     // adding define wrapper
                     if ( isModular ) {
 
-                        // Output the `return defaultExport;` statement.
-                        // Done within the loop to have access to `bodyStatementPath`.
+                        
                         if ( hasExport ) {
+
+                            // var _exports = {};
+                            programPath.unshiftContainer("body", [
+                                t.variableDeclaration("var", [
+                                    t.variableDeclarator(
+                                        exportsVariableName,
+                                        t.objectExpression([])
+                                    )
+                                ])
+                            ]);
+
+
+
+                            // return <expression>;
                             let returnStatement;
 
                             if ( isOnlyDefaultExport ) {
@@ -181,19 +230,7 @@ module.exports = function({ types: t }) {
                                     exportsVariableName
                                 );
                             }
-                            
-                            
-                            // var _exports = {};
-                            programPath.unshiftContainer("body", [
-                                t.variableDeclaration("var", [
-                                    t.variableDeclarator(
-                                        exportsVariableName,
-                                        t.objectExpression([])
-                                    )
-                                ])
-                            ]);
 
-                            // return <expression>;
                             programPath.pushContainer("body", [returnStatement]);
                         }
 
