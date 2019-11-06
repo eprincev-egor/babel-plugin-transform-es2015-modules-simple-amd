@@ -50,6 +50,7 @@ Supported features:
 - ``export default NODE``
 - ``export {item as name}``
 - ``export * from 'PATH'``
+- ``auto named modules: define("file", [], func...)``
 
 Other features aren't supported.
 
@@ -72,6 +73,50 @@ $ npm install --save-dev babel-plugin-transform-import-as-amd
   "plugins": ["transform-import-as-amd"]
 }
 ```
+## Usage auto names
+
+### Via `.babelrc` (Recommended)
+
+**.babelrc**
+
+```json
+{
+  "plugins": [
+    ["transform-import-as-amd", {
+      // convert full file paths to module name
+      moduleName: {
+        // module name is relative path at basePath
+        basePath: __dirname
+      }
+    }]
+  ]
+}
+```
+
+**/some/module.js**
+Converts this code:
+```js
+export default function MyModule() {}
+```
+Into this one (with moduleName option):
+```js
+define("some/module", [], function (x) {
+  "use strict";
+  var _exports = {};
+  _exports.default = function MyModule() {};
+  return _exports;
+});
+```
+Into this one (withOUT moduleName option):
+```js
+define([], function (x) {
+  "use strict";
+  var _exports = {};
+  _exports.default = function MyModule() {};
+  return _exports;
+});
+```
+
 ## More examples
 ---------------
 Converts this code:
