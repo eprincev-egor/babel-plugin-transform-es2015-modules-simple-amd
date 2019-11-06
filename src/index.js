@@ -10,6 +10,11 @@ define(IMPORT_PATHS, function(IMPORT_VARS) {
 	BODY;
 });
 `);
+const forInTemplate = template(`
+for (var _key in IMPORT_VAR) {
+    EXPORT_VAR[ _key ] = IMPORT_VAR[ _key ];
+}
+`);
 
 module.exports = function({ types: t }) {
     
@@ -247,6 +252,34 @@ module.exports = function({ types: t }) {
 
                                 bodyStatementPath.remove();
                             }
+                        }
+
+
+                        // export * from "module"
+                        if ( t.isExportAllDeclaration(bodyStatementPath) ) {
+                            isModular = true;
+                            isOnlyDefaultExport = false;
+                            hasExport = true;
+
+                            // save import path
+                            importPaths.push(
+                                bodyStatementPath.node.source
+                            );
+                            // importVars.length
+                            // should be equal 
+                            // importPaths.length 
+                            const tmpImportVariableName = bodyStatementPath.scope.generateUidIdentifier(
+                                bodyStatementPath.node.source.value
+                            );
+                            importVars.push( tmpImportVariableName );
+                            
+                            const forIn = forInTemplate({
+                                IMPORT_VAR: tmpImportVariableName,
+                                EXPORT_VAR: exportsVariableName
+                            });
+
+
+                            bodyStatementPath.replaceWith(forIn);
                         }
                     }
 
