@@ -58,7 +58,7 @@ Other features aren't supported.
 ## Installation
 
 ```sh
-$ npm install --save-dev babel-plugin-transform-es2015-modules-amd-fork
+$ npm install --save-dev babel-plugin-transform-import-as-amd
 ```
 
 ## Usage
@@ -69,7 +69,7 @@ $ npm install --save-dev babel-plugin-transform-es2015-modules-amd-fork
 
 ```json
 {
-  "plugins": ["transform-es2015-modules-amd-fork"]
+  "plugins": ["transform-import-as-amd"]
 }
 ```
 ## More examples
