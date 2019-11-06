@@ -79,7 +79,7 @@ $ npm install --save-dev babel-plugin-transform-import-as-amd
 
 **.babelrc**
 
-```json
+```js
 {
   "plugins": [
     ["transform-import-as-amd", {
