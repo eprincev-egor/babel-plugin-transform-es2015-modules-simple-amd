@@ -1,3 +1,5 @@
+"use strict";
+
 require("better-log/install");
 const template = require("@babel/template").default;
 
@@ -9,6 +11,19 @@ define(IMPORT_PATHS, function(IMPORT_VARS) {
 `);
 
 module.exports = function({ types: t }) {
+    
+    function exportExpression({
+        exportsVariableName,
+        key,
+        value
+    }) {
+        return t.assignmentExpression(
+            "=", 
+            t.memberExpression(exportsVariableName, t.identifier(key)), 
+            value
+        );
+    }
+
     return {
         visitor: {
             Program: {
@@ -108,21 +123,78 @@ module.exports = function({ types: t }) {
                         if ( t.isExportDefaultDeclaration(bodyStatementPath) ) {
                             // need return at end file
                             hasExport = true;
+                            isModular = true;
+
                             // expression after keyword default
                             const declaration = bodyStatementPath.get("declaration");
-                            bodyStatementPath
+                            let exportValue = declaration.node;
+                            
+                            let isFunction = (
+                                t.isFunctionDeclaration(declaration)
+                            );
+                            let isClass = (
+                                t.isClassDeclaration(declaration)
+                            );
+
+                            if ( isFunction ) {
+                                let funcNode = exportValue;
+                                exportValue = t.toExpression(funcNode);
+                            }
+                            if ( isClass ) {
+                                let classNode = exportValue;
+                                exportValue = t.toExpression(classNode);
+                            }
+
+
+                            const expression = exportExpression({
+                                exportsVariableName,
+                                key: "default",
+                                value: exportValue
+                            });
+
+                            bodyStatementPath.replaceWith(expression);
                         }
+
                     }
 
+
+                    // adding define wrapper
                     if ( isModular ) {
 
                         // Output the `return defaultExport;` statement.
                         // Done within the loop to have access to `bodyStatementPath`.
                         if ( hasExport ) {
-                            const returnStatement = t.returnStatement(
-                                exportsVariableName
-                            );
-                            programPath.unshiftContainer("body", [returnStatement]);
+                            let returnStatement;
+
+                            if ( isOnlyDefaultExport ) {
+                                // return _exports.default;
+                                returnStatement = t.returnStatement(
+                                    t.memberExpression(
+                                        exportsVariableName, 
+                                        t.identifier("default")
+                                    )
+                                );
+                            }
+                            else {
+                                // return _exports;
+                                returnStatement = t.returnStatement(
+                                    exportsVariableName
+                                );
+                            }
+                            
+                            
+                            // var _exports = {};
+                            programPath.unshiftContainer("body", [
+                                t.variableDeclaration("var", [
+                                    t.variableDeclarator(
+                                        exportsVariableName,
+                                        t.objectExpression([])
+                                    )
+                                ])
+                            ]);
+
+                            // return <expression>;
+                            programPath.pushContainer("body", [returnStatement]);
                         }
 
 
