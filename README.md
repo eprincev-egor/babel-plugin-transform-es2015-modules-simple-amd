@@ -217,6 +217,32 @@ define(["module"], function (_module) {
 ```
 ---------------
 
+---------------
+with enabled moduleName option,
+Converts this code (some/module.js):
+```js
+define([], function() {});
+```
+
+Into this one:
+```js
+define("some/module", [], function() {});
+```
+---------------
+
+---------------
+with enabled moduleName option,
+Converts this code (some/module.js):
+```js
+define("another-name", [], function() {});
+```
+
+Into this one (no modifications):
+```js
+define("another-name", [], function() {});
+```
+---------------
+
 [The same thing for CommonJS](https://github.com/finom/babel-plugin-transform-es2015-modules-simple-commonjs).
 
 Thanks to [RReverser](https://github.com/RReverser/babel-plugin-hello-world).  
