@@ -58,7 +58,9 @@ module.exports = function({ types: t }) {
                     const exportsVariableName = programPath.scope.generateUidIdentifier("exports");
                     let hasExport = false;
                     let isOnlyDefaultExport = true;
-                    let isModular = false;
+                    let needDefineWrapper = false;
+                    let isAnonymousAmdModule = false;
+                    let defineExpression = null;
 
                     for (let i = 0; i < bodyPaths.length; i++) {
                         const bodyStatementPath = bodyPaths[i];
@@ -138,14 +140,14 @@ module.exports = function({ types: t }) {
                             }
                             
                             bodyStatementPath.remove();
-                            isModular = true;
+                            needDefineWrapper = true;
                         }
 
                         // export default
                         if ( t.isExportDefaultDeclaration(bodyStatementPath) ) {
                             // need return at end file
                             hasExport = true;
-                            isModular = true;
+                            needDefineWrapper = true;
 
                             // expression after keyword default
                             const declaration = bodyStatementPath.get("declaration");
@@ -183,7 +185,7 @@ module.exports = function({ types: t }) {
                         // export class Test {};
                         if ( t.isExportNamedDeclaration(bodyStatementPath) ) {
                             hasExport = true;
-                            isModular = true;
+                            needDefineWrapper = true;
                             isOnlyDefaultExport = false;
 
                             const {specifiers} = bodyStatementPath.node;
@@ -273,7 +275,7 @@ module.exports = function({ types: t }) {
 
                         // export * from "module"
                         if ( t.isExportAllDeclaration(bodyStatementPath) ) {
-                            isModular = true;
+                            needDefineWrapper = true;
                             isOnlyDefaultExport = false;
                             hasExport = true;
 
@@ -297,11 +299,32 @@ module.exports = function({ types: t }) {
 
                             bodyStatementPath.replaceWith(forIn);
                         }
+
+                        if ( t.isExpressionStatement(bodyStatementPath) ) {
+                            const expression = bodyStatementPath.get("expression");
+                            if ( t.isCallExpression(expression) ) {
+                                const calleeNode = expression.get("callee");
+                                const nameNode = calleeNode.get("name");
+                                const args = expression.get("arguments") || [];
+                                const firstArg = args[0];
+
+                                let isAnonymousDefine = (
+                                    nameNode.node == "define" &&
+                                    firstArg && 
+                                    t.isArrayExpression( firstArg )
+                                );
+
+                                if ( isAnonymousDefine ) {
+                                    isAnonymousAmdModule = true;
+                                    defineExpression = expression;
+                                }
+                            }
+                        }
                     }
 
 
                     // adding define wrapper
-                    if ( isModular ) {
+                    if ( needDefineWrapper ) {
 
                         
                         if ( hasExport ) {
@@ -367,6 +390,21 @@ module.exports = function({ types: t }) {
                         programPath.node.body = [
                             buildModule( templateValues )
                         ];
+                    }
+                    
+                    if ( isAnonymousAmdModule ) {
+                        if ( options.moduleName ) {
+                            const basePath = options.moduleName.basePath;
+                            const relativePath = path.relative(basePath, fullFilePath);
+                            const moduleName = relativePath
+                                .replace(/\.js$/, "")
+                                .replace(/\\/g, "/");
+                            
+                            
+                            defineExpression.node.arguments.unshift(
+                                t.stringLiteral( moduleName )
+                            );
+                        }
                     }
                 }
             }
