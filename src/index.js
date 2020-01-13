@@ -199,13 +199,14 @@ module.exports = function({ types: t }) {
                         if ( t.isExportNamedDeclaration(bodyStatementPath) ) {
                             hasExport = true;
                             needDefineWrapper = true;
-                            isOnlyDefaultExport = false;
 
                             const {specifiers} = bodyStatementPath.node;
                             const declaration = bodyStatementPath.get("declaration");
 
                             // export var a = 1;
                             if ( !specifiers.length ) {
+                                isOnlyDefaultExport = false;
+
                                 // replace "export <expression>"
                                 // to "<expression>"
                                 bodyStatementPath.replaceWith( declaration );
@@ -271,6 +272,10 @@ module.exports = function({ types: t }) {
                                 specifiers.forEach(specifier => {
                                     let asName = specifier.exported.name;
                                     let exportValue = specifier.local;
+
+                                    if ( asName != "default" ) {
+                                        isOnlyDefaultExport = false;
+                                    }
     
                                     const statement = exportStatement({
                                         exportsVariableName,

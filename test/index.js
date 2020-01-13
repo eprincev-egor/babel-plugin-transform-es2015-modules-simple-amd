@@ -44,12 +44,26 @@ function runTests() {
 function runTest(dir) {
     let output;
     let outputError;
+    let babelOptions = {
+        plugins: [
+            [pluginPath, dir.options]
+        ]
+    };
+
     try {
-        output = babel.transformFileSync(dir.path + "/actual.js", {
-            plugins: [
-                [pluginPath, dir.options]
-            ]
-        });
+        const additionalBabelOptions = require(dir.path + "/babel.js");
+        if ( additionalBabelOptions.presets ) {
+            babelOptions.presets = additionalBabelOptions.presets;
+        }
+    } catch(err) {
+        err;
+    }
+    
+    try {
+        output = babel.transformFileSync(
+            dir.path + "/actual.js", 
+            babelOptions
+        );
     } catch(ex) {
         outputError = ex;
         output = null;
