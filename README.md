@@ -84,10 +84,9 @@ $ npm install --save-dev babel-plugin-transform-import-as-amd
   "plugins": [
     ["transform-import-as-amd", {
       // convert full file paths to module name
-      moduleName: {
-        // module name is relative path at basePath
-        basePath: __dirname
-      }
+      moduleName: true,
+      // module name is relative path at basePath
+      basePath: __dirname
     }]
   ]
 }
