@@ -86,7 +86,11 @@ $ npm install --save-dev babel-plugin-transform-import-as-amd
       // convert full file paths to module name
       moduleName: true,
       // module name is relative path at basePath
-      basePath: __dirname
+      basePath: __dirname,
+      // paths to some modules, like are require-config.js
+      paths: {
+        module: "relative/path"
+      }
     }]
   ]
 }
@@ -241,7 +245,29 @@ Into this one (no modifications):
 define("another-name", [], function() {});
 ```
 ---------------
+  
+---------------  
+with enabled paths option
+```js
+// options = {
+//   basePath: __dirname,
+//   paths: {
+//     helpers: "lib/helpers"
+//   }
+// }
+// filename = "some/file.js"
 
+import {isString} from "../lib/helpers"
+```
+
+Into this one:
+```js
+define(["helpers"], function(_libHelpers) {
+  "use strict";
+  var isString = _libHelpers.isString;
+});
+```
+---------------
 [The same thing for CommonJS](https://github.com/finom/babel-plugin-transform-es2015-modules-simple-commonjs).
 
 Thanks to [RReverser](https://github.com/RReverser/babel-plugin-hello-world).  

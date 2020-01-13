@@ -376,6 +376,25 @@ module.exports = function({ types: t }) {
                             programPath.pushContainer("body", [returnStatement]);
                         }
 
+                        if ( options.paths ) {
+                            importPaths.forEach(importNode => {
+                                const importPath = importNode.value;
+                                const fullImportPath = path.resolve(
+                                    meta.file.opts.filename, 
+                                    "../" + importPath
+                                );
+
+                                for (let moduleName in options.paths) {
+                                    let modulePath = options.paths[ moduleName ];
+                                    let fullModulePath = path.resolve(options.basePath, modulePath);
+
+                                    if ( fullImportPath == fullModulePath ) {
+                                        importNode.value = moduleName;
+                                        break;
+                                    }
+                                }
+                            });
+                        }
 
                         const templateValues = {
                             IMPORT_PATHS: t.arrayExpression(
