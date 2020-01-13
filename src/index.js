@@ -51,8 +51,8 @@ module.exports = function({ types: t }) {
                     let customModuleName;
 
                     if ( options.moduleName ) {
-                        if ( !options.moduleName.basePath ) {
-                            throw new Error("moduleName should be object like are: {basePath: '...'}");
+                        if ( !options.moduleName.basePath && !options.basePath ) {
+                            throw new Error("moduleName should be boolean or object like are: {basePath: '...'}");
                         }
 
                         // try find comment:
@@ -391,7 +391,7 @@ module.exports = function({ types: t }) {
                             buildModule = buildNamedModule;
 
 
-                            const basePath = options.moduleName.basePath;
+                            const basePath = options.moduleName.basePath || options.basePath;
                             const relativePath = path.relative(basePath, fullFilePath);
                             const moduleName = (
                                 customModuleName ? 
@@ -411,7 +411,7 @@ module.exports = function({ types: t }) {
                     
                     if ( isAnonymousAmdModule ) {
                         if ( options.moduleName ) {
-                            const basePath = options.moduleName.basePath;
+                            const basePath = options.moduleName.basePath || options.basePath;
                             const relativePath = path.relative(basePath, fullFilePath);
                             const moduleName = relativePath
                                 .replace(/\.js$/, "")
