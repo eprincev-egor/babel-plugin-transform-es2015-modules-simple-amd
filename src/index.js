@@ -48,10 +48,23 @@ module.exports = function({ types: t }) {
                     const namedImports = [];
                     const options = meta.opts || {};
                     const fullFilePath = meta.filename;
+                    let customModuleName;
 
                     if ( options.moduleName ) {
                         if ( !options.moduleName.basePath ) {
                             throw new Error("moduleName should be object like are: {basePath: '...'}");
+                        }
+
+                        // try find comment:
+                        // module name: some
+                        let sourceCode = meta.file.code;
+                        if ( /\/\/\s*module name\s*:/.test(sourceCode) ) {
+                            let execRes = /\/\/\s*module name\s*:\s*([^\n\r]+)/.exec(sourceCode);
+                            customModuleName = execRes && execRes[1];
+                            
+                            if ( customModuleName ) {
+                                customModuleName = customModuleName.trim();
+                            }
                         }
                     }
                     
@@ -380,9 +393,13 @@ module.exports = function({ types: t }) {
 
                             const basePath = options.moduleName.basePath;
                             const relativePath = path.relative(basePath, fullFilePath);
-                            const moduleName = relativePath
-                                .replace(/\.js$/, "")
-                                .replace(/\\/g, "/");
+                            const moduleName = (
+                                customModuleName ? 
+                                    customModuleName : 
+                                    relativePath
+                                        .replace(/\.js$/, "")
+                                        .replace(/\\/g, "/")
+                            );
 
                             templateValues.MODULE_NAME = t.stringLiteral(moduleName);
                         }
