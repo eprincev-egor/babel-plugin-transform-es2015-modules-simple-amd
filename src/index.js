@@ -421,7 +421,7 @@ module.exports = function({ types: t }) {
                                 customModuleName ? 
                                     customModuleName : 
                                     relativePath
-                                        .replace(/\.js$/, "")
+                                        .replace(/\.(js|ts)$/, "")
                                         .replace(/\\/g, "/")
                             );
 
@@ -438,7 +438,7 @@ module.exports = function({ types: t }) {
                             const basePath = options.moduleName.basePath || options.basePath;
                             const relativePath = path.relative(basePath, fullFilePath);
                             const moduleName = relativePath
-                                .replace(/\.js$/, "")
+                                .replace(/\.(js|ts)$/, "")
                                 .replace(/\\/g, "/");
                             
                             

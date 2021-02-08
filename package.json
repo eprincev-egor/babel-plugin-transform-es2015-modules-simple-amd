@@ -1,6 +1,6 @@
 {
   "name": "babel-plugin-transform-import-as-amd",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Simplified imports and exports",
   "repository": "https://github.com/eprincev-egor/babel-plugin-transform-es2015-modules-simple-amd",
   "license": "MIT",
