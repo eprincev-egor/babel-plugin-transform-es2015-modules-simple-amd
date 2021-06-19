@@ -1,6 +1,8 @@
 define([], function () {
   "use strict";
   var _exports = {};
-  _exports.default = class Test {};
+  class Test {}
+
+  _exports.default = Test;
   return _exports.default;
 });

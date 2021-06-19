@@ -165,6 +165,7 @@ module.exports = function({ types: t }) {
                             // expression after keyword default
                             const declaration = bodyStatementPath.get("declaration");
                             let exportValue = declaration.node;
+                            let needExportExpression = true;
                             
                             let isFunction = (
                                 t.isFunctionDeclaration(declaration)
@@ -179,17 +180,36 @@ module.exports = function({ types: t }) {
                             }
                             if ( isClass ) {
                                 let classNode = exportValue;
-                                exportValue = t.toExpression(classNode);
+
+                                if ( classNode.id ) {
+                                    const className = t.identifier(classNode.id.name);
+                                    const exportDefault = exportStatement({
+                                        exportsVariableName,
+                                        key: "default",
+                                        value: className
+                                    });
+
+                                    bodyStatementPath.replaceWith(classNode);
+                                    programPath.pushContainer("body", [
+                                        exportDefault
+                                    ]);
+
+                                    needExportExpression = false;
+                                }
+                                else {
+                                    exportValue = t.toExpression(classNode);
+                                }
                             }
 
-
-                            const statement = exportStatement({
-                                exportsVariableName,
-                                key: "default",
-                                value: exportValue
-                            });
-
-                            bodyStatementPath.replaceWith(statement);
+                            if ( needExportExpression ) {
+                                const statement = exportStatement({
+                                    exportsVariableName,
+                                    key: "default",
+                                    value: exportValue
+                                });
+    
+                                bodyStatementPath.replaceWith(statement);
+                            }
                         }
 
                         // export {x as y}
