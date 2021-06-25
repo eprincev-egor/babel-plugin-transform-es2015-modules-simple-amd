@@ -1,1 +1,2 @@
-test/fixtures
+test/fixtures/**/actual.js
+test/fixtures/**/expected.js

@@ -5,6 +5,23 @@
   "repository": "https://github.com/eprincev-egor/babel-plugin-transform-es2015-modules-simple-amd",
   "license": "MIT",
   "main": "src/index.js",
+  "nyc": {
+    "extension": [
+      ".js"
+    ],
+    "reporter": [
+      "html",
+      "text-summary"
+    ],
+    "all": true,
+    "exclude": [
+      "coverage",
+      ".mocharc.js",
+      "test/fixtures/*/expected.js",
+      "test/fixtures/*/actual.js",
+      "test/fixtures/*/options.js"
+    ]
+  },
   "dependencies": {
     "@babel/runtime": "^7.6.3",
     "better-log": "^1.3.1",
@@ -19,11 +36,13 @@
     "chalk": "^1.1.0",
     "clear": "0.0.1",
     "diff": "^1.4.0",
+    "eslint": "^7.29.0",
+    "mocha": "^9.0.1",
+    "nyc": "^15.1.0",
     "watch": "^0.16.0"
   },
   "scripts": {
-    "test": "node test",
-    "watch": "node test --watch"
+    "test": "nyc mocha"
   },
   "keywords": [
     "babel-plugin",

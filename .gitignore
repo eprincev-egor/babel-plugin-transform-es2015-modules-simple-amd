@@ -3,3 +3,5 @@ node_modules
 *.log
 .directory
 .vscode/
+coverage/
+.nyc_output/
