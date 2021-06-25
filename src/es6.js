@@ -52,28 +52,10 @@ module.exports.onEs6Module = function onEs6Module(t, programPath, meta) {
                 bodyStatementPath.node.source
             );
 
-
-            const {specifiers} = bodyStatementPath.node;
-                
-            // import "some"
-            const isAnonymousImport = (
-                specifiers.length === 0
-            );
-                // import some from "some"
-            const isImportDefault = (
-                specifiers.length === 1 &&
-                    specifiers[0].type === "ImportDefaultSpecifier"
-            );
-                // import * as some from "some"
-            const isImportAllAs = (
-                specifiers.length === 1 &&
-                    specifiers[0].type !== "ImportDefaultSpecifier" &&
-                    !specifiers[0].imported
-            );
-
+            const importNode = bodyStatementPath.node;
 
             // import "some"
-            if ( isAnonymousImport ) {
+            if ( isAnonymousImport(importNode) ) {
                 // importVars.length
                 // should be equal 
                 // importPaths.length 
@@ -84,8 +66,8 @@ module.exports.onEs6Module = function onEs6Module(t, programPath, meta) {
             }
             // import some from "some"
             // import * as some from "some"
-            else if ( isImportDefault || isImportAllAs ) {
-                const asName = specifiers[0].local;
+            else if ( isImportDefault(importNode) || isImportAllAs(importNode) ) {
+                const asName = importNode.specifiers[0].local;
                 importVars.push( asName );
             }
             // import {x, y, z} from "xyz"
@@ -96,7 +78,7 @@ module.exports.onEs6Module = function onEs6Module(t, programPath, meta) {
                 );
                 importVars.push( asName );
 
-                specifiers.forEach(({imported, local}) => {
+                importNode.specifiers.forEach(({imported, local}) => {
                     namedImports.push(
                         t.variableDeclaration("var", [
                             t.variableDeclarator(
@@ -125,20 +107,14 @@ module.exports.onEs6Module = function onEs6Module(t, programPath, meta) {
             const declaration = bodyStatementPath.get("declaration");
             let exportValue = declaration.node;
             let needExportExpression = true;
-                
-            let isFunction = (
-                t.isFunctionDeclaration(declaration)
-            );
-            let isClass = (
-                t.isClassDeclaration(declaration)
-            );
 
-            if ( isFunction ) {
-                let funcNode = exportValue;
+
+            if ( isFunction(t, declaration) ) {
+                const funcNode = exportValue;
                 exportValue = t.toExpression(funcNode);
             }
-            if ( isClass ) {
-                let classNode = exportValue;
+            if ( isClass(t, declaration) ) {
+                const classNode = exportValue;
 
                 if ( classNode.id ) {
                     const className = t.identifier(classNode.id.name);
@@ -382,6 +358,38 @@ module.exports.onEs6Module = function onEs6Module(t, programPath, meta) {
         ];
     }
 };
+
+function isAnonymousImport(importNode) {
+    // import "some"
+    return (
+        importNode.specifiers.length === 0
+    );
+}
+
+function isImportDefault(importNode) {
+    // import some from "some"
+    return (
+        importNode.specifiers.length === 1 &&
+        importNode.specifiers[0].type === "ImportDefaultSpecifier"
+    );
+}
+
+function isImportAllAs(importNode) {
+    // import * as some from "some"
+    return (
+        importNode.specifiers.length === 1 &&
+        importNode.specifiers[0].type !== "ImportDefaultSpecifier" &&
+        !importNode.specifiers[0].imported
+    );
+}
+
+function isFunction(t, declaration) {
+    return t.isFunctionDeclaration(declaration);
+}
+
+function isClass(t, declaration) {
+    return t.isClassDeclaration(declaration);
+}
 
 function exportStatement({
     t, exportsVariableName,
