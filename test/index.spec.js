@@ -1,26 +1,18 @@
+"use strict";
 
-let babel = require("@babel/core");
-let chalk = require("chalk");
-let clear = require("clear");
-let diff = require("diff");
-let fs = require("fs");
-let path = require("path");
+const assert = require("assert");
+const babel = require("@babel/core");
+const fs = require("fs");
+const path = require("path");
 
 require("@babel/register");
 
 describe("Test", () => {
-    let pluginPath = require.resolve("../src");
+    const pluginPath = require.resolve("../src");
 
     function runTests() {
-        let testsPath = __dirname + "/fixtures/";
-
-        let dirs;
-        if ( process.env.testName ) {
-            dirs = [process.env.testName];
-        }
-        else {
-            dirs = fs.readdirSync(testsPath);
-        }
+        const testsPath = __dirname + "/fixtures/";
+        const dirs = fs.readdirSync(testsPath);
         
         dirs.map(function(dirName) {
             const dirPath = path.join(testsPath, dirName);
@@ -43,89 +35,42 @@ describe("Test", () => {
     }
 
     function runTest(dir) {
-        it(dir.path, () => {
-            let output;
-            let outputError;
-            let babelOptions = {
+        it(dir.name, () => {
+            const babelOptions = {
                 plugins: [
                     [pluginPath, dir.options]
                 ]
             };
 
-            try {
+            const babelConfigPath = dir.path + "/babel.js";
+            if ( fs.existsSync(babelConfigPath) ) {
                 const additionalBabelOptions = require(dir.path + "/babel.js");
-                if ( additionalBabelOptions.presets ) {
-                    babelOptions.presets = additionalBabelOptions.presets;
-                }
-            } catch(err) {
-                err;
-            }
-            
-            try {
-                output = babel.transformFileSync(
-                    dir.path + "/actual.js", 
-                    babelOptions
-                );
-            } catch(ex) {
-                outputError = ex;
-                output = null;
-            }
-            
-            let expected;
-            try {
-                expected = fs.readFileSync(dir.path + "/expected.js", "utf-8");
-            } catch(ex) {
-                // Should error out.
-                expected = null;
+                babelOptions.presets = additionalBabelOptions.presets;
             }
 
-            function normalizeLines(str) {
-                return str.trimRight().replace(/\r\n/g, "\n");
-            }
-
-            process.stdout.write(chalk.bgWhite.black(dir.name));
-            process.stdout.write("\n\n");
-
-            if(expected == null) {
-                if(output == null) {
-                    process.stdout.write(chalk.green("Not supported"));
-                } else {
-                    process.stdout.write(chalk.red("Should have errored out."));
-                }
-            } else if(output == null) {
-                process.stdout.write(chalk.red("Should have worked but instead errored out with: " + outputError.stack));
-            } else {
-                diff.diffLines(normalizeLines(output.code), normalizeLines(expected))
-                    .forEach(function (part) {
-                        let value = part.value;
-                        if (part.added) {
-                            value = chalk.green(part.value);
-                        } else if (part.removed) {
-                            value = chalk.red(part.value);
-                        }
+            const actual = babel.transformFileSync(
+                dir.path + "/actual.js", 
+                babelOptions
+            ).code;
             
-            
-                        process.stdout.write(value);
-                    });
-            }
+            const expected = fs.readFileSync(dir.path + "/expected.js", "utf-8");
 
-            process.stdout.write("\n\n\n");
+            assert.strictEqual(
+                normalizeLines(actual),
+                normalizeLines(expected)
+            );
+
         });
     }
 
-    if (process.argv.indexOf("--watch") >= 0) {
-        require("watch").watchTree(__dirname + "/..", function () {
-            delete require.cache[pluginPath];
-            clear();
-            console.log("Press Ctrl+C to stop watching...");
-            console.log("================================");
-            try {
-                runTests();
-            } catch (e) {
-                console.error(chalk.magenta(e.stack));
-            }
-        });
-    } else {
-        runTests();
+    runTests();
+    
+    function normalizeLines(str) {
+        return str.trimRight()
+            .replace(/\r\n/g, "\n")
+            .split("\n")
+            .filter(line => line.trim() !== "")
+            .join("\n");
     }
+
 });
