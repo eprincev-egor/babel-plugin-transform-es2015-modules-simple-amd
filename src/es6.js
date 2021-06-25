@@ -39,8 +39,8 @@ module.exports.onEs6Module = function onEs6Module(t, programPath, meta) {
         
     const exportsVariableName = programPath.scope.generateUidIdentifier("exports");
     let hasExport = false;
+    let hasImport = false;
     let isOnlyDefaultExport = true;
-    let needDefineWrapper = false;
 
     for (let i = 0; i < bodyPaths.length; i++) {
         const bodyStatementPath = bodyPaths[i];
@@ -94,14 +94,13 @@ module.exports.onEs6Module = function onEs6Module(t, programPath, meta) {
             }
                 
             bodyStatementPath.remove();
-            needDefineWrapper = true;
+            hasImport = true;
         }
 
         // export default
         if ( t.isExportDefaultDeclaration(bodyStatementPath) ) {
             // need return at end file
             hasExport = true;
-            needDefineWrapper = true;
 
             // expression after keyword default
             const declaration = bodyStatementPath.get("declaration");
@@ -153,7 +152,6 @@ module.exports.onEs6Module = function onEs6Module(t, programPath, meta) {
         // export class Test {};
         if ( t.isExportNamedDeclaration(bodyStatementPath) ) {
             hasExport = true;
-            needDefineWrapper = true;
 
             const {specifiers} = bodyStatementPath.node;
             const declaration = bodyStatementPath.get("declaration");
@@ -248,7 +246,6 @@ module.exports.onEs6Module = function onEs6Module(t, programPath, meta) {
 
         // export * from "module"
         if ( t.isExportAllDeclaration(bodyStatementPath) ) {
-            needDefineWrapper = true;
             isOnlyDefaultExport = false;
             hasExport = true;
 
@@ -276,7 +273,7 @@ module.exports.onEs6Module = function onEs6Module(t, programPath, meta) {
 
 
     // adding define wrapper
-    if ( needDefineWrapper ) {
+    if ( hasImport || hasExport ) {
 
             
         if ( hasExport ) {
