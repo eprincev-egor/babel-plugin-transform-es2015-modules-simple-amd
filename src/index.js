@@ -26,18 +26,6 @@ for (var _key in IMPORT_VAR) {
 
 module.exports = function({ types: t }) {
     
-    function exportStatement({
-        exportsVariableName,
-        key,
-        value
-    }) {
-        return t.toStatement( t.assignmentExpression(
-            "=", 
-            t.memberExpression(exportsVariableName, t.identifier(key)), 
-            value
-        ) );
-    }
-
     return {
         visitor: {
             Program: {
@@ -85,10 +73,11 @@ module.exports = function({ types: t }) {
         const namedImports = [];
         const options = meta.opts || {};
         const fullFilePath = meta.filename;
+        const basePath = getBasePath(options);
         let customModuleName;
 
         if ( options.moduleName ) {
-            if ( !options.moduleName.basePath && !options.basePath ) {
+            if ( !basePath ) {
                 throw new Error("moduleName should be boolean or object like are: {basePath: '...'}");
             }
 
@@ -439,7 +428,6 @@ module.exports = function({ types: t }) {
                 buildModule = buildNamedModule;
 
 
-                const basePath = options.moduleName.basePath || options.basePath;
                 const relativePath = path.relative(basePath, fullFilePath);
                 const moduleName = (
                     customModuleName ? 
@@ -468,7 +456,7 @@ module.exports = function({ types: t }) {
             return;
         }
 
-        const basePath = options.moduleName.basePath || options.basePath;
+        const basePath = getBasePath(options);
         const relativePath = path.relative(basePath, meta.filename);
         const moduleName = relativePath
             .replace(/\.(js|ts)$/, "")
@@ -501,4 +489,24 @@ module.exports = function({ types: t }) {
             }
         }
     }
+
+    function getBasePath(options) {
+        return (
+            options.moduleName && options.moduleName.basePath || 
+            options.basePath
+        );
+    }
+
+    function exportStatement({
+        exportsVariableName,
+        key,
+        value
+    }) {
+        return t.toStatement( t.assignmentExpression(
+            "=", 
+            t.memberExpression(exportsVariableName, t.identifier(key)), 
+            value
+        ) );
+    }
+
 };
