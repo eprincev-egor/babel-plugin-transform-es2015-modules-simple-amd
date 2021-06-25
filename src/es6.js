@@ -39,7 +39,6 @@ module.exports.onEs6Module = function onEs6Module(t, programPath, meta) {
         
     const exportsVariableName = programPath.scope.generateUidIdentifier("exports");
     let hasExport = false;
-    let hasImport = false;
     let isOnlyDefaultExport = true;
 
     for (let i = 0; i < bodyPaths.length; i++) {
@@ -92,9 +91,8 @@ module.exports.onEs6Module = function onEs6Module(t, programPath, meta) {
                     );
                 });
             }
-                
+
             bodyStatementPath.remove();
-            hasImport = true;
         }
 
         // export default
@@ -260,7 +258,7 @@ module.exports.onEs6Module = function onEs6Module(t, programPath, meta) {
 
 
     // adding define wrapper
-    if ( hasImport || hasExport ) {
+    if ( importPaths.length || hasExport ) {
 
             
         if ( hasExport ) {
