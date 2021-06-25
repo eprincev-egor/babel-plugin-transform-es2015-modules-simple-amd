@@ -55,17 +55,7 @@ module.exports = function({ types: t }) {
                             throw new Error("moduleName should be boolean or object like are: {basePath: '...'}");
                         }
 
-                        // try find comment:
-                        // module name: some
-                        let sourceCode = meta.file.code;
-                        if ( /\/\/\s*module name\s*:/.test(sourceCode) ) {
-                            let execRes = /\/\/\s*module name\s*:\s*([^\n\r]+)/.exec(sourceCode);
-                            customModuleName = execRes && execRes[1];
-                            
-                            if ( customModuleName ) {
-                                customModuleName = customModuleName.trim();
-                            }
-                        }
+                        customModuleName = extractCustomModuleName(meta);
                     }
                     
                     const exportsVariableName = programPath.scope.generateUidIdentifier("exports");
@@ -453,22 +443,34 @@ module.exports = function({ types: t }) {
                         ];
                     }
                     
-                    if ( isAnonymousAmdModule ) {
-                        if ( options.moduleName ) {
-                            const basePath = options.moduleName.basePath || options.basePath;
-                            const relativePath = path.relative(basePath, fullFilePath);
-                            const moduleName = relativePath
-                                .replace(/\.(js|ts)$/, "")
-                                .replace(/\\/g, "/");
+                    if ( isAnonymousAmdModule && options.moduleName ) {
+                        const basePath = options.moduleName.basePath || options.basePath;
+                        const relativePath = path.relative(basePath, fullFilePath);
+                        const moduleName = relativePath
+                            .replace(/\.(js|ts)$/, "")
+                            .replace(/\\/g, "/");
                             
                             
-                            defineExpression.node.arguments.unshift(
-                                t.stringLiteral( moduleName )
-                            );
-                        }
+                        defineExpression.node.arguments.unshift(
+                            t.stringLiteral( moduleName )
+                        );
                     }
                 }
             }
         }
     };
 };
+
+function extractCustomModuleName(meta) {
+    // try find comment:
+    // module name: some
+    let sourceCode = meta.file.code;
+    if ( /\/\/\s*module name\s*:/.test(sourceCode) ) {
+        let execRes = /\/\/\s*module name\s*:\s*([^\n\r]+)/.exec(sourceCode);
+        const customModuleName = execRes && execRes[1];
+                            
+        if ( customModuleName ) {
+            return customModuleName.trim();
+        }
+    }
+}
