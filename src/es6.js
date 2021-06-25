@@ -70,11 +70,6 @@ module.exports.onEs6Module = function onEs6Module(t, programPath, meta) {
                     specifiers[0].type !== "ImportDefaultSpecifier" &&
                     !specifiers[0].imported
             );
-                // import {x, y, z} from "xyz"
-            const isImportSomeAs = (
-                !isAnonymousImport &&
-                    !isImportDefault
-            );
 
 
             // import "some"
@@ -94,7 +89,7 @@ module.exports.onEs6Module = function onEs6Module(t, programPath, meta) {
                 importVars.push( asName );
             }
             // import {x, y, z} from "xyz"
-            else if ( isImportSomeAs ) {
+            else {
                 // convert "/path/to/a"  to   _pathToA
                 const asName = bodyStatementPath.scope.generateUidIdentifier(
                     bodyStatementPath.node.source.value
@@ -114,9 +109,6 @@ module.exports.onEs6Module = function onEs6Module(t, programPath, meta) {
                         ])
                     );
                 });
-            }
-            else {
-                throw new Error("unknown case");
             }
                 
             bodyStatementPath.remove();
