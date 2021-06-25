@@ -108,11 +108,11 @@ module.exports.onEs6Module = function onEs6Module(t, programPath, meta) {
             let needExportExpression = true;
 
 
-            if ( isFunction(t, declaration) ) {
+            if ( t.isFunctionDeclaration(declaration) ) {
                 const funcNode = exportValue;
                 exportValue = t.toExpression(funcNode);
             }
-            if ( isClass(t, declaration) ) {
+            if ( t.isClassDeclaration(declaration) ) {
                 const classNode = exportValue;
 
                 if ( classNode.id ) {
@@ -180,7 +180,7 @@ module.exports.onEs6Module = function onEs6Module(t, programPath, meta) {
                 }
 
                 // export function x() {}
-                if ( isFunction(t, declaration) ) {
+                if ( t.isFunctionDeclaration(declaration) ) {
                     const funcNode = declaration.node;
                     const asName = funcNode.id.name;
 
@@ -194,7 +194,7 @@ module.exports.onEs6Module = function onEs6Module(t, programPath, meta) {
                 }
 
                 // export class Test {}
-                if ( isClass(t, declaration) ) {
+                if ( t.isClassDeclaration(declaration) ) {
                     const classNode = declaration.node;
                     const asName = classNode.id.name;
 
@@ -274,8 +274,6 @@ module.exports.onEs6Module = function onEs6Module(t, programPath, meta) {
                     )
                 ])
             ]);
-
-
 
             // return <expression>;
             let returnStatement;
@@ -386,14 +384,6 @@ function isImportAllAs(importNode) {
         importNode.specifiers[0].type !== "ImportDefaultSpecifier" &&
         !importNode.specifiers[0].imported
     );
-}
-
-function isFunction(t, declaration) {
-    return t.isFunctionDeclaration(declaration);
-}
-
-function isClass(t, declaration) {
-    return t.isClassDeclaration(declaration);
 }
 
 function exportStatement({
