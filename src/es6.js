@@ -299,49 +299,70 @@ module.exports.onEs6Module = function onEs6Module(t, programPath, meta) {
             programPath.pushContainer("body", [returnStatement]);
         }
 
-        if ( options.paths ) {
-            importPaths.forEach(importNode => {
-                const importPath = importNode.value;
-                const fullImportPath = path.resolve(
-                    meta.file.opts.filename, 
-                    "../" + importPath
-                );
-
-                for (const moduleName in options.paths) {
-                    const modulePath = options.paths[ moduleName ];
-                    const fullModulePath = path.resolve(basePath, modulePath);
-
-                    if ( fullImportPath == fullModulePath ) {
-                        importNode.value = moduleName;
-                        break;
-                    }
-                }
-            });
-        }
-
-        const templateValues = {
-            IMPORT_PATHS: t.arrayExpression(
-                importPaths
-            ),
-            IMPORT_VARS: importVars,
-            BODY: programPath.node.body,
-            NAMED_IMPORTS: namedImports
-        };
-        let buildModule = buildAnonymousModule;
-            
-        if ( options.moduleName ) {
-            buildModule = buildNamedModule;
-
-            const moduleName = generateModuleName(meta);
-
-            templateValues.MODULE_NAME = t.stringLiteral(moduleName);
-        }
-
-        programPath.node.body = [
-            buildModule( templateValues )
-        ];
+        buildModule({
+            t, programPath, meta,
+            importPaths, importVars, namedImports
+        });
     }
 };
+
+function buildModule({
+    t, programPath, meta,
+    importPaths, importVars, 
+    namedImports
+}) {
+    const options = meta.opts || {};
+    const templateValues = {
+        IMPORT_PATHS: prepareImportPaths(
+            t, meta, importPaths
+        ),
+        IMPORT_VARS: importVars,
+        BODY: programPath.node.body,
+        NAMED_IMPORTS: namedImports
+    };
+        
+    if ( options.moduleName ) {
+        const moduleName = generateModuleName(meta);
+
+        templateValues.MODULE_NAME = t.stringLiteral(moduleName);
+
+        programPath.node.body = [
+            buildNamedModule( templateValues )
+        ];
+    }
+    else {
+        programPath.node.body = [
+            buildAnonymousModule( templateValues )
+        ];
+    }
+}
+
+function prepareImportPaths(t, meta, importPaths) {
+    const options = meta.opts || {};
+    const basePath = getBasePath(options);
+
+    if ( options.paths ) {
+        importPaths.forEach(importNode => {
+            const importPath = importNode.value;
+            const fullImportPath = path.resolve(
+                meta.file.opts.filename, 
+                "../" + importPath
+            );
+
+            for (const moduleName in options.paths) {
+                const modulePath = options.paths[ moduleName ];
+                const fullModulePath = path.resolve(basePath, modulePath);
+
+                if ( fullImportPath == fullModulePath ) {
+                    importNode.value = moduleName;
+                    break;
+                }
+            }
+        });
+    }
+
+    return t.arrayExpression(importPaths);
+}
 
 function isAnonymousImport(importNode) {
     // import "some"
