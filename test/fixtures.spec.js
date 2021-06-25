@@ -2,9 +2,9 @@
 
 const assert = require("assert");
 const babel = require("@babel/core");
-const readDirs = require("./readDirs");
-const getBabelOptions = require("./getBabelOptions");
-const normalizeLines = require("./normalizeLines");
+const readDirs = require("./util/readDirs");
+const getBabelOptions = require("./util/getBabelOptions");
+const normalizeLines = require("./util/normalizeLines");
 
 require("@babel/register");
 
