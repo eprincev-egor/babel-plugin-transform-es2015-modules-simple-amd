@@ -2,7 +2,7 @@
 
 const template = require("@babel/template").default;
 const path = require("path");
-const {getBasePath} = require("./util");
+const {getBasePath, generateModuleName} = require("./util");
 
 const buildAnonymousModule = template(`
 define(IMPORT_PATHS, function(IMPORT_VARS) {
@@ -31,16 +31,10 @@ module.exports.onEs6Module = function onEs6Module(t, programPath, meta) {
     const importVars = [];
     const namedImports = [];
     const options = meta.opts || {};
-    const fullFilePath = meta.filename;
     const basePath = getBasePath(options);
-    let customModuleName;
 
-    if ( options.moduleName ) {
-        if ( !basePath ) {
-            throw new Error("moduleName should be boolean or object like are: {basePath: '...'}");
-        }
-
-        customModuleName = extractCustomModuleName(meta);
+    if ( options.moduleName && !basePath ) {
+        throw new Error("moduleName should be boolean or object like are: {basePath: '...'}");
     }
         
     const exportsVariableName = programPath.scope.generateUidIdentifier("exports");
@@ -386,15 +380,7 @@ module.exports.onEs6Module = function onEs6Module(t, programPath, meta) {
         if ( options.moduleName ) {
             buildModule = buildNamedModule;
 
-
-            const relativePath = path.relative(basePath, fullFilePath);
-            const moduleName = (
-                customModuleName ? 
-                    customModuleName : 
-                    relativePath
-                        .replace(/\.(js|ts)$/, "")
-                        .replace(/\\/g, "/")
-            );
+            const moduleName = generateModuleName(meta);
 
             templateValues.MODULE_NAME = t.stringLiteral(moduleName);
         }
@@ -404,20 +390,6 @@ module.exports.onEs6Module = function onEs6Module(t, programPath, meta) {
         ];
     }
 };
-
-function extractCustomModuleName(meta) {
-    // try find comment:
-    // module name: some
-    let sourceCode = meta.file.code;
-    if ( /\/\/\s*module name\s*:/.test(sourceCode) ) {
-        let execRes = /\/\/\s*module name\s*:[ \t]*([^ \t\n\r]+)/.exec(sourceCode);
-        const customModuleName = execRes && execRes[1];
-                                
-        if ( customModuleName ) {
-            return customModuleName.trim();
-        }
-    }
-}
 
 function exportStatement({
     t, exportsVariableName,

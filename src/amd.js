@@ -1,7 +1,6 @@
 "use strict";
 
-const path = require("path");
-const {getBasePath} = require("./util");
+const {generateModuleName} = require("./util");
 
 module.exports.getDefineExpression = function getDefineExpression(t, bodyPaths) {
     for (const bodyStatementPath of bodyPaths) {
@@ -33,12 +32,7 @@ module.exports.onAmdModule = function onAmdModule(t, meta, defineExpression) {
         return;
     }
 
-    const basePath = getBasePath(options);
-    const relativePath = path.relative(basePath, meta.filename);
-    const moduleName = relativePath
-        .replace(/\.(js|ts)$/, "")
-        .replace(/\\/g, "/");
-                
+    const moduleName = generateModuleName(meta);                
                 
     defineExpression.node.arguments.unshift(
         t.stringLiteral( moduleName )
