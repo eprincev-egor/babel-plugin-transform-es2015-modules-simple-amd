@@ -166,54 +166,42 @@ module.exports.onEs6Module = function onEs6Module(t, programPath, meta) {
                     
 
                 // export var a = 1;
-                let isVariable = t.isVariableDeclaration( declaration );
-                if ( isVariable ) {
-                    let varNode = declaration.node;
-                    let asName = varNode.declarations[0].id.name;
-                        
-
-                    let exportValue = t.identifier(asName);
+                if ( t.isVariableDeclaration( declaration ) ) {
+                    const varNode = declaration.node;
+                    const asName = varNode.declarations[0].id.name;
 
                     const statement = exportStatement({
                         t, exportsVariableName,
                         key: asName,
-                        value: exportValue
+                        value: t.identifier(asName)
                     });
                         
                     programPath.pushContainer("body", [statement]);
                 }
 
                 // export function x() {}
-                let isFunction = t.isFunctionDeclaration(declaration);
-                if ( isFunction ) {
-                    let funcNode = declaration.node;
-                    let asName = funcNode.id.name;
-
-
-                    let exportValue = t.identifier(asName);
+                if ( isFunction(t, declaration) ) {
+                    const funcNode = declaration.node;
+                    const asName = funcNode.id.name;
 
                     const statement = exportStatement({
                         t, exportsVariableName,
                         key: asName,
-                        value: exportValue
+                        value: t.identifier(asName)
                     });
                         
                     programPath.pushContainer("body", [statement]);
                 }
 
                 // export class Test {}
-                let isClass = t.isClassDeclaration(declaration);
-                if ( isClass ) {
-                    let classNode = declaration.node;
-                    let asName = classNode.id.name;
-
-
-                    let exportValue = t.identifier(asName);
+                if ( isClass(t, declaration) ) {
+                    const classNode = declaration.node;
+                    const asName = classNode.id.name;
 
                     const statement = exportStatement({
                         t, exportsVariableName,
                         key: asName,
-                        value: exportValue
+                        value: t.identifier(asName)
                     });
                         
                     programPath.pushContainer("body", [statement]);
@@ -223,8 +211,7 @@ module.exports.onEs6Module = function onEs6Module(t, programPath, meta) {
             // export {x as y}
             else {
                 specifiers.forEach(specifier => {
-                    let asName = specifier.exported.name;
-                    let exportValue = specifier.local;
+                    const asName = specifier.exported.name;
 
                     if ( asName != "default" ) {
                         isOnlyDefaultExport = false;
@@ -233,7 +220,7 @@ module.exports.onEs6Module = function onEs6Module(t, programPath, meta) {
                     const statement = exportStatement({
                         t, exportsVariableName,
                         key: asName,
-                        value: exportValue
+                        value: specifier.local
                     });
                         
                     programPath.pushContainer("body", [statement]);
@@ -320,9 +307,9 @@ module.exports.onEs6Module = function onEs6Module(t, programPath, meta) {
                     "../" + importPath
                 );
 
-                for (let moduleName in options.paths) {
-                    let modulePath = options.paths[ moduleName ];
-                    let fullModulePath = path.resolve(options.basePath, modulePath);
+                for (const moduleName in options.paths) {
+                    const modulePath = options.paths[ moduleName ];
+                    const fullModulePath = path.resolve(basePath, modulePath);
 
                     if ( fullImportPath == fullModulePath ) {
                         importNode.value = moduleName;
