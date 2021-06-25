@@ -2,7 +2,7 @@
 
 const template = require("@babel/template").default;
 const path = require("path");
-const {getBasePath, generateModuleName} = require("./util");
+const {getBasePath, generateModuleName, toBasePath} = require("./util");
 
 const buildAnonymousModule = template(`
 define(IMPORT_PATHS, function(IMPORT_VARS) {
@@ -340,7 +340,7 @@ function prepareImportPaths(t, meta, importPaths) {
     if ( options.paths ) {
         importPaths.forEach(importNode => {
             const importPath = importNode.value;
-            const fullImportPath = path.resolve(
+            const absolutePath = path.resolve(
                 meta.file.opts.filename, 
                 "../" + importPath
             );
@@ -349,11 +349,26 @@ function prepareImportPaths(t, meta, importPaths) {
                 const modulePath = options.paths[ moduleName ];
                 const fullModulePath = path.resolve(basePath, modulePath);
 
-                if ( fullImportPath == fullModulePath ) {
+                if ( absolutePath == fullModulePath ) {
                     importNode.value = moduleName;
                     break;
                 }
             }
+        });
+    }
+
+    if ( options.relativeImportToBasePath ) {
+        importPaths.forEach(importNode => {
+            const importPath = importNode.value;
+            if ( importPath[0] !== "." ) {
+                return;
+            }
+            const absolutePath = path.resolve(
+                meta.file.opts.filename, 
+                "../" + importPath
+            );
+            const normalPath = toBasePath(basePath, absolutePath);
+            importNode.value = normalPath;
         });
     }
 
